@@ -43,12 +43,17 @@ SHELL ["/bin/bash", "-c"]
 RUN source /opt/ros/noetic/setup.bash && \
     mkdir -p ~/catkin_ws/src && \
     cd ~/catkin_ws/src && \
-    git clone https://github.com/wh200720041/floam.git && \
+    git clone https://github.com/wh200720041/floam && \
     cd .. && \
     catkin_make
     
 RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc && \
     echo "source /root/catkin_ws/devel/setup.bash" >> ~/.bashrc
+
+RUN apt-get update && apt-get install -y unzip nano
+
+RUN mkdir -p ~/Downloads
 # ENTRYPOINT ["/ros_entrypoint.sh"]
 # Arranca en bash por defecto (podés sobreescribir con `docker run ... <cmd>`)
 CMD ["bash"]
+    
