@@ -23,22 +23,16 @@ RUN apt-get update && \
         libpcl-dev && \
     rm -rf /var/lib/apt/lists/*
 
-
 RUN git clone --depth 1 --branch 2.1.0 https://ceres-solver.googlesource.com/ceres-solver && \
     cd ceres-solver && \
     git submodule update --init --recursive  && \
     cd ..
     
-
-
-
 RUN mkdir ceres-bin && \
     cd ceres-bin && \
     cmake ../ceres-solver -DBUILD_TESTING=OFF && \
     make -j3 && \
     make install
-
-
 
 RUN source /opt/ros/melodic/setup.bash && \
     mkdir -p ~/catkin_ws/src && \
