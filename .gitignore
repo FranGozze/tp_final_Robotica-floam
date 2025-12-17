@@ -1,2 +1,4 @@
 HK_MEMS_Dataset/
 WT3_*
+floam-venv/
+__pycache__/

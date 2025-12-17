@@ -44,7 +44,7 @@ def reorder_columns(parts: List[str]) -> Optional[str]:
             ts, tx, ty, tz, qx, qy, qz, qw = parts
         except ValueError:
             return None
-        return f"{ts} {ty} {tx} {tz} {qw} {qx} {qy} {qz}"
+        return f"{float(ts)/1000000000} {tx} {ty} {tz} {qw} {qx} {qy} {qz}"
     elif n == 7:
         # Some files may miss one quaternion component; reject to avoid wrong mapping
         return None

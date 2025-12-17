@@ -108,6 +108,71 @@ def convert_utm_to_tum(utm_data: List[Tuple[float, float, float]],
     
     return tum_lines
 
+def get_time_params(f_input: str, length: int) -> Tuple[float, float]:
+    """
+    Parse time parameters from input string.
+    
+    Args:
+        f_input: Input string in format "start_time,step" or just "start_time"
+        
+    Returns:
+        Tuple of (start_time, step)
+    """
+    start_timestamp = 0.0
+    end_timestamp = 0.0
+    with open(f_input, 'r') as f:
+        
+        line = f.readline().strip()
+        parts = line.split(' ')
+        start_timestamp = float(parts[0])
+        for line in f:
+            line = line.strip().rstrip(',')  # Remove trailing comma
+            parts = line.split()
+            end_timestamp = float(parts[0])
+            
+
+    total_time = end_timestamp - start_timestamp
+    step = total_time / (length - 1) if length > 1 else 0.1
+
+                
+    return start_timestamp, step
+
+def parse_floam(filepath: str) -> List[Tuple[float, float, float]]:
+    """
+    Parse FLOAM pose data from file.
+    
+    Expected format:
+      timestamp tx ty tz qx qy qz qw
+      1234567890.123 1.0 2.0 3.0 0.0 0.0 0.0 1.0
+      ...
+    Args:
+        filepath: Path to FLOAM pose file
+    Returns:
+        List of (tx, ty, tz) tuples
+    """
+    data = []
+    
+    with open(filepath, 'r') as f:
+        for line in f:
+            line = line.strip()
+            
+            # Skip empty lines and headers
+            if not line or line.startswith('#'):
+                continue
+            
+            parts = line.split()
+            if len(parts) < 4:
+                continue
+            
+            try:
+                tx = float(parts[1])
+                ty = float(parts[2])
+                tz = float(parts[3])
+                data.append((tx, ty, tz))
+            except (ValueError, IndexError):
+                continue
+    
+    return data
 
 
 def main():
@@ -137,10 +202,8 @@ Examples:
     
     parser.add_argument('input', help='Input GPS data file')
     parser.add_argument('-o', '--output', help='Output TUM file (default: stdout)')
-    parser.add_argument('--start-time', type=float, default=0.0,
-                        help='Starting timestamp in seconds (for UTM input, default: 0.0)')
-    parser.add_argument('--time-step', type=float, default=0.1,
-                        help='Time step between points in seconds (for UTM input, default: 0.1)')
+    parser.add_argument('--f-input', required=True, help='Starting timestamp in seconds (for UTM input, default: 0.0)')
+    
     parser.add_argument('--quat', nargs=4, type=float, metavar=('QX', 'QY', 'QZ', 'QW'),
                         help='Quaternion orientation (default: 0 0 0 1 = identity)')
     
@@ -154,13 +217,14 @@ Examples:
             print("Error: No valid UTM data found in input file", file=sys.stderr)
             sys.exit(1)
         
+        start_timestamp, step = get_time_params(args.f_input, len(utm_data))
         print(f"Parsed {len(utm_data)} UTM points", file=sys.stderr)
         
         # Convert to TUM format
         quat = tuple(args.quat) if args.quat else None
         tum_lines = convert_utm_to_tum(utm_data, 
-                                        start_timestamp=args.start_time,
-                                        timestamp_step=args.time_step,
+                                        start_timestamp=start_timestamp,
+                                        timestamp_step=step,
                                         relative=True,
                                         quat=quat)
         
