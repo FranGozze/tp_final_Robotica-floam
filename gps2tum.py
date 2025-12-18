@@ -124,11 +124,11 @@ def get_time_params(f_input: str, length: int) -> Tuple[float, float]:
         
         line = f.readline().strip()
         parts = line.split(' ')
-        start_timestamp = float(parts[0])
+        start_timestamp = float(parts[0]) / 1000000000
         for line in f:
             line = line.strip().rstrip(',')  # Remove trailing comma
             parts = line.split()
-            end_timestamp = float(parts[0])
+            end_timestamp = float(parts[0]) / 1000000000
             
 
     total_time = end_timestamp - start_timestamp
