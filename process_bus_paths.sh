@@ -66,14 +66,14 @@ for file in "${DATASET2[@]}"; do
     echo "  ✓ Completed: $formatted_file"
 done
 
-rm -rf imgs/*.png
+rm -rf imgs/*
 for ds in "${DATASET[@]}"; do
     echo "Processing dataset: $ds"
     grt_file="${INTERMEDIATE_DIR}/${ds}_bus_grt_path_tum.txt"
     floam_file="${OUTPUT_DIR}/${ds}_slam_pose_formatted.txt"
     
     evo_traj tum "$grt_file" "$floam_file" --plot_mode=xy --save_plot "imgs/${ds}_comparison.png"
-    
+    evo_rpe tum "$grt_file" "$floam_file" --plot_mode=xy --save_plot "imgs/${ds}_comparison.png" 
     echo "  ✓ Completed: $ds"
 done
 grt_file="Files/grt/gps_path/hh1_gps_path_grt.txt"
@@ -81,6 +81,7 @@ floam_file="${FLOAM_DIR}/hh1_slam_pose.txt"
 formatted_file="${OUTPUT_DIR}/hh1_slam_pose_formatted.txt"
 python3 format_path.py "$floam_file" --source "$grt_file"  -o "$formatted_file"
 evo_traj tum "$grt_file" "$formatted_file" --plot_mode=xy --save_plot "imgs/hh1_comparison.png" 
+evo_rpe tum "$grt_file" "$formatted_file" --plot_mode=xy --save_plot "imgs/hh1_comparison.png" 
     
 echo "  ✓ Completed: hh1"
 

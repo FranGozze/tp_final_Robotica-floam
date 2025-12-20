@@ -284,6 +284,76 @@ def matrix_2_tum(matrix):
     return f"{t[0]} {t[1]} {t[2]} {qw} {qx} {qy} {qz}"
 
 
+def compute_rmse(source, target):
+    """
+    Traducción directa de compute_rmse.m a Python
+    
+    source: (Ns, 2)
+    target: (Nt, 2)
+    
+    Retorna:
+        rmse: float
+        rmsre: float
+    """
+
+    source = np.asarray(source, dtype=float)
+    target = np.asarray(target, dtype=float)
+
+    num_points_source = source.shape[0]
+    num_points_target = target.shape[0]
+
+    match_in_target = np.zeros((num_points_source, 2))
+
+    # -------------------------------------------------
+    # Nearest neighbor (fuerza bruta)
+    # -------------------------------------------------
+    for i_source in range(num_points_source):
+        min_dist = np.inf
+        nearest_point_idx = 0
+
+        for j_target in range(num_points_target):
+            dist = np.linalg.norm(source[i_source] - target[j_target])
+            if dist < min_dist:
+                min_dist = dist
+                nearest_point_idx = j_target
+
+        match_in_target[i_source] = target[nearest_point_idx]
+
+    # -------------------------------------------------
+    # RMSE
+    # -------------------------------------------------
+    differences = source - match_in_target
+    squared_errors = np.sum(differences ** 2, axis=1)
+
+    # -------------------------------------------------
+    # Trajectory length
+    # -------------------------------------------------
+    trajectory_lengths = np.zeros(match_in_target.shape[0])
+
+    for i in range(1, match_in_target.shape[0]):
+        distance = np.linalg.norm(match_in_target[i] - match_in_target[i - 1])
+        trajectory_lengths[i] = trajectory_lengths[i - 1] + distance
+
+    # -------------------------------------------------
+    # Relative error
+    # -------------------------------------------------
+    sqrt_squared_errors = np.sqrt(squared_errors)
+
+    valid_indices = trajectory_lengths != 0
+    relative_differences = np.zeros_like(squared_errors)
+
+    for i in range(squared_errors.shape[0]):
+        if valid_indices[i]:
+            relative_differences[i] = (
+                sqrt_squared_errors[i] / trajectory_lengths[i]
+            )
+
+    rmse = np.sqrt(np.mean(squared_errors))
+    rmsre = np.mean(relative_differences)
+
+    return rmse, rmsre
+
+
 def preprocess_position(slam_positions):
     """
     Traducción directa de preprocess_position.m a Python
@@ -361,8 +431,8 @@ def preprocess_position(slam_positions):
 
 def process_data(source_file, target_file):
 
-    source_points = [list(map(float, line.strip().split())) for line in source_file if line.strip()]
-    source_points = [[p[1],p[2]] for p in source_points]
+    source = [list(map(float, line.strip().split())) for line in source_file if line.strip()]
+    source_points = [[p[1],p[2]] for p in source]
     target_points = [list(map(float, line.strip().split())) for line in target_file if line.strip()]
 
     target_points_2d, target_points_3d = preprocess_position(target_points)
@@ -390,11 +460,21 @@ def process_data(source_file, target_file):
     # print([[p[0], p[1]] for p in aligned_points] - aligned_target_positions_icp)
     aligned_points_icp = []
     x_first, y_first   = aligned_target_positions_icp[0]
+    # Alignign to origin
+    aligned_target_positions_icp = aligned_target_positions_icp - np.array([x_first, y_first])
+    
+    rmse_source, rmsre_source = compute_rmse(aligned_target_positions_icp, source_points)
+    rmse_target, rmsre_target = compute_rmse(source_points, aligned_target_positions_icp)
+    
+    rmse = ( rmse_source + rmse_target )/2
+    rmsre =  (rmsre_source + rmsre_target) /2
+
+    print(f"rmse: {rmse}, rmsre: {rmsre}")
 
     for i, tum in enumerate(aligned_target_positions_icp):
-        x = tum[0] - x_first
-        y = tum[1] - y_first
-        z = target_points[i][3]  # Mantener la altitud original
+        x = tum[0]
+        y = tum[1]
+        z = target_points[i][3]  
         qw, qx, qy, qz = target_points[i][7], target_points[i][4], target_points[i][5], target_points[i][6]
         aligned_points_icp.append(f"{target_points[i][0]/1000000000} {x:.6f} {y:.6f} {z:.6f} {qx:.6f} {qy:.6f} {qz:.6f} {qw:.6f}")
     # aligned_points.append(f"{target_points[i][0]/1000000000} {tum}")
