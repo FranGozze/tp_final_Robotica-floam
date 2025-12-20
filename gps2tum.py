@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """
-Convert GPS data (latitude/longitude) to TUM trajectory format.
 
-TUM format: timestamp tx ty tz qx qy qz qw
-where:
-  - timestamp: time in seconds
-  - tx, ty, tz: 3D position
-  - qx, qy, qz, qw: orientation quaternion (identity if not available)
+Este script es el encargado de convertir datos GPS (latitud/longitud) al formato de trayectoria TUM.
+
 """
 
 import argparse
@@ -14,7 +10,6 @@ import sys
 import math
 import csv
 from typing import Tuple, List, Optional
-
 
 
 def parse_utm_file(filepath: str) -> List[Tuple[float, float, float]]:
@@ -55,8 +50,6 @@ def parse_utm_file(filepath: str) -> List[Tuple[float, float, float]]:
                 continue
     
     return data
-
-
 
 
 def convert_utm_to_tum(utm_data: List[Tuple[float, float, float]], 
@@ -137,42 +130,6 @@ def get_time_params(f_input: str, length: int) -> Tuple[float, float]:
                 
     return start_timestamp, step
 
-def parse_floam(filepath: str) -> List[Tuple[float, float, float]]:
-    """
-    Parse FLOAM pose data from file.
-    
-    Expected format:
-      timestamp tx ty tz qx qy qz qw
-      1234567890.123 1.0 2.0 3.0 0.0 0.0 0.0 1.0
-      ...
-    Args:
-        filepath: Path to FLOAM pose file
-    Returns:
-        List of (tx, ty, tz) tuples
-    """
-    data = []
-    
-    with open(filepath, 'r') as f:
-        for line in f:
-            line = line.strip()
-            
-            # Skip empty lines and headers
-            if not line or line.startswith('#'):
-                continue
-            
-            parts = line.split()
-            if len(parts) < 4:
-                continue
-            
-            try:
-                tx = float(parts[1])
-                ty = float(parts[2])
-                tz = float(parts[3])
-                data.append((tx, ty, tz))
-            except (ValueError, IndexError):
-                continue
-    
-    return data
 
 
 def main():
@@ -202,7 +159,7 @@ Examples:
     
     parser.add_argument('input', help='Input GPS data file')
     parser.add_argument('-o', '--output', help='Output TUM file (default: stdout)')
-    parser.add_argument('--f-input', required=True, help='Starting timestamp in seconds (for UTM input, default: 0.0)')
+    parser.add_argument('--f-input', required=True, help='File from which you calculate start time and step time')
     
     parser.add_argument('--quat', nargs=4, type=float, metavar=('QX', 'QY', 'QZ', 'QW'),
                         help='Quaternion orientation (default: 0 0 0 1 = identity)')
