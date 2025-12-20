@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 """
+Este script realiza el trabajo de reformatear los archivos de trayectoria TUM
+y además alinea el camino aproximado con el groundtruth calculando la transformación 
+óptima entre dos nubes de puntos 2D usando ICP y Kabsch.
+
+
 Reformat TUM trajectory files to place qw between tz and qx.
 
 Input (standard TUM):
@@ -25,7 +30,7 @@ from typing import List, Optional
 import numpy as np
 import transforms3d
 
-
+# Formatea el archivo salida removiendo las ',' y remplazandolas por espacios
 def parse_line(line: str, delimiter: Optional[str] = None) -> Optional[List[str]]:
     line = line.strip()
     if not line or line.startswith('#'):
@@ -36,7 +41,7 @@ def parse_line(line: str, delimiter: Optional[str] = None) -> Optional[List[str]
         parts = line.split()
     return parts
 
-
+# Reordena las del archivo de entrada cambiando qw por qx
 def reorder_columns(parts: List[str]) -> Optional[str]:
     # Expect 8 columns: ts tx ty tz qx qy qz qw
     # Want:              ts tx ty tz qw qx qy qz
@@ -58,7 +63,7 @@ def reorder_columns(parts: List[str]) -> Optional[str]:
         # Unknown format length; ignore
         return None
 
-
+# Procesa el stream de entrada y salida
 def process_stream(fin, fout, delimiter_opt: str = 'auto') -> int:
     count = 0
     for raw in fin:
@@ -72,10 +77,6 @@ def process_stream(fin, fout, delimiter_opt: str = 'auto') -> int:
         fout.write(out + "\n")
         count += 1
     return count
-
-
-
-
 
 
 def simple_2d_icp(source, target, max_iterations, tolerance):
@@ -283,7 +284,7 @@ def matrix_2_tum(matrix):
     qw, qx, qy, qz = transforms3d.quaternions.mat2quat(R)
     return f"{t[0]} {t[1]} {t[2]} {qw} {qx} {qy} {qz}"
 
-
+# Calcula RMSE y RMSRE entre source y target
 def compute_rmse(source, target):
     """
     Traducción directa de compute_rmse.m a Python
@@ -431,9 +432,9 @@ def preprocess_position(slam_positions):
 
 def process_data(source_file, target_file):
 
-    source = [list(map(float, line.strip().split())) for line in source_file if line.strip()]
+    source = [list(map(float, parse_line(line, None))) for line in source_file if line.strip()]
     source_points = [[p[1],p[2]] for p in source]
-    target_points = [list(map(float, line.strip().split())) for line in target_file if line.strip()]
+    target_points = [list(map(float, parse_line(line, None))) for line in target_file if line.strip()]
 
     target_points_2d, target_points_3d = preprocess_position(target_points)
     # print("Target points after preprocess:", target_points_2d, target_points_3d)

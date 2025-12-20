@@ -44,8 +44,8 @@ for file in "${DATASET[@]}"; do
         continue
     fi
 done
-DATASET2=(ty1 wt3)
-for file in "${DATASET2[@]}"; do
+
+for file in "${DATASET[@]}"; do
     # Get the base filename without path
 
     # Remove .txt extension
@@ -73,7 +73,7 @@ for ds in "${DATASET[@]}"; do
     floam_file="${OUTPUT_DIR}/${ds}_slam_pose_formatted.txt"
     
     evo_traj tum "$grt_file" "$floam_file" --plot_mode=xy --save_plot "imgs/${ds}_comparison.png"
-    evo_rpe tum "$grt_file" "$floam_file" --plot_mode=xy --save_plot "imgs/${ds}_comparison.png" 
+    evo_rpe tum "$grt_file" "$floam_file" --plot_mode=xy  
     echo "  ✓ Completed: $ds"
 done
 grt_file="Files/grt/gps_path/hh1_gps_path_grt.txt"
@@ -81,7 +81,7 @@ floam_file="${FLOAM_DIR}/hh1_slam_pose.txt"
 formatted_file="${OUTPUT_DIR}/hh1_slam_pose_formatted.txt"
 python3 format_path.py "$floam_file" --source "$grt_file"  -o "$formatted_file"
 evo_traj tum "$grt_file" "$formatted_file" --plot_mode=xy --save_plot "imgs/hh1_comparison.png" 
-evo_rpe tum "$grt_file" "$formatted_file" --plot_mode=xy --save_plot "imgs/hh1_comparison.png" 
+evo_rpe tum "$grt_file" "$formatted_file" --plot_mode=xy 
     
 echo "  ✓ Completed: hh1"
 
