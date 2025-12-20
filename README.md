@@ -5,6 +5,8 @@ docker build .
 ```
 ```
 xhost +local:docker
+```
+```
 docker run -it \
    --env="DISPLAY=$DISPLAY" \
    --env="QT_X11_NO_MITSHM=1" \
